@@ -3,6 +3,8 @@ import java.io.Serializable;
 public class User implements Serializable {
     static final long serialVersionUID = 1L;
 
+    static final String MASTER = "master";
+
     private String id;
     private String pw;
 

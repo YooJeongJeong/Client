@@ -4,7 +4,6 @@ public class Room implements Serializable {
     static final long serialVersionUID = 1L;
 
     static final String LOBBY = "lobby";
-    static final String MASTER = "master";
 
     private String name;
     private String owner;
