@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="LoginController"
+            prefHeight="300.0" prefWidth="500.0">
+    <children>
+        <StackPane>
+            <children>
+                <Pane fx:id="signupPanel" prefHeight="300" prefWidth="500" style="-fx-background-color: #FEFEFE">
+                    <Label text="Sign up" layoutX="160" layoutY="20">
+                        <font>
+                            <Font name="Arial" size="50" />
+                        </font>
+                    </Label>
+
+                    <Label text="ID:" layoutX="61" layoutY="112">
+                        <font>
+                            <Font name="Arial" size="20" />
+                        </font>
+                    </Label>
+                    <TextField fx:id="newId" prefWidth="250" layoutX="100" layoutY="110" promptText="Enter a new id"/>
+
+                    <Label text="PW:" layoutX="50" layoutY="156">
+                        <font>
+                            <Font name="Arial" size="20" />
+                        </font>
+                    </Label>
+                    <PasswordField fx:id="newPw" prefWidth="250" layoutX="100" layoutY="155" promptText="Enter a new password"/>
+
+                    <Button fx:id="btnSignup" text="Register" prefWidth="100" prefHeight="70"
+                            layoutX="375" layoutY="110" onAction="#handleBtnAction"/>
+
+                    <Label fx:id="alertSignup" textFill="#f44336" layoutX="65" layoutY="200" opacity="0">
+                        <font>
+                            <Font name="Arial" size="15" />
+                        </font>
+                    </Label>
+
+                    <Label text="Do you want to log in? Click here!" textFill="#6abf69" layoutX="57" layoutY="237">
+                        <font>
+                            <Font name="Arial" size="20" />
+                        </font>
+                    </Label>
+                    <Button fx:id="btnGoToLogin" text="Log in" prefWidth="100" prefHeight="40"
+                            layoutX="375" layoutY="230" onAction="#handleBtnAction" />
+                </Pane>
+
+                <Pane fx:id="loginPanel" prefHeight="300" prefWidth="500" style="-fx-background-color: #FEFEFE">
+                    <children>
+                        <Label text="Log in" layoutX="180" layoutY="20">
+                            <font>
+                                <Font name="Arial" size="50" />
+                            </font>
+                        </Label>
+
+                        <Label text="ID:" layoutX="61" layoutY="112">
+                            <font>
+                                <Font name="Arial" size="20" />
+                            </font>
+                        </Label>
+                        <TextField fx:id="userId" prefWidth="250" layoutX="100" layoutY="110" promptText="Enter your id"/>
+
+                        <Label text="PW:" layoutX="50" layoutY="156">
+                            <font>
+                                <Font name="Arial" size="20" />
+                            </font>
+                        </Label>
+                        <PasswordField fx:id="userPw" prefWidth="250" layoutX="100" layoutY="155" promptText="Enter your password"/>
+
+                        <Button fx:id="btnLogin" text="Log in" prefWidth="100" prefHeight="70"
+                                layoutX="375" layoutY="110" onAction="#handleBtnAction"/>
+
+                        <Label fx:id="alertLogin" textFill="#f44336" layoutX="65" layoutY="200" opacity="0">
+                            <font>
+                                <Font name="Arial" size="15" />
+                            </font>
+                        </Label>
+
+                        <Label text="Do you want to sign up? Click here!" textFill="#6abf69" layoutX="45" layoutY="237">
+                            <font>
+                                <Font name="Arial" size="20" />
+                            </font>
+                        </Label>
+                        <Button fx:id="btnGoToSignup" text="Sign up" prefWidth="100" prefHeight="40"
+                                layoutX="375" layoutY="230" onAction="#handleBtnAction" />
+
+                    </children>
+                </Pane>
+            </children>
+        </StackPane>
+    </children>
+</AnchorPane>

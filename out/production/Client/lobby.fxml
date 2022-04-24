@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="LobbyController"
+            prefHeight="300.0" prefWidth="500.0">
+    <center>
+        <TableView fx:id="roomInfo" prefHeight="200" prefWidth="400">
+            <columns>
+                <TableColumn prefWidth="250" text="Room name" style="-fx-alignment: CENTER" />
+                <TableColumn prefWidth="90" text="Owner" style="-fx-alignment: CENTER"/>
+                <TableColumn prefWidth="60" text="Num" style="-fx-alignment: CENTER" />
+            </columns>
+        </TableView>
+    </center>
+
+    <right>
+        <TableView fx:id="userInfo" prefHeight="200" prefWidth="100">
+            <columns>
+                <TableColumn prefWidth="100" text="User" style="-fx-alignment: CENTER"/>
+            </columns>
+        </TableView>
+    </right>
+
+    <bottom>
+        <BorderPane>
+            <center>
+                <Button fx:id="btnJoinRoom" prefWidth="400" text="Join" onAction="#handleBtnAction"/>
+            </center>
+            <right>
+                <Button fx:id="btnRefresh" prefWidth="100" text="Refresh" onAction="#handleBtnAction" />
+            </right>
+            <bottom>
+                <BorderPane>
+                    <center>
+                        <TextField fx:id="roomName" promptText="Please enter a name for the new room" alignment="CENTER"/>
+                    </center>
+                    <right>
+                        <Button fx:id="btnMakeRoom" prefWidth="100" text="Make" onAction="#handleBtnAction" />
+                    </right>
+                </BorderPane>
+            </bottom>
+        </BorderPane>
+    </bottom>
+
+</BorderPane>
