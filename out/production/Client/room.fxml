@@ -15,7 +15,7 @@
                 <menus>
                     <Menu text="파일">
                         <items>
-                            <MenuItem fx:id="btnUpload" text="파일 업로드" onAction="#handleUploadAction">
+                            <MenuItem text="파일 업로드" onAction="#handleUploadAction">
                                 <accelerator>
                                     <KeyCodeCombination alt="DOWN" code="S" control="UP"
                                                         meta = "UP" shift="DOWN" shortcut="UP" />
@@ -29,7 +29,7 @@
                                 </graphic>
                             </MenuItem>
 
-                            <MenuItem fx:id="btnDownload" text="파일 다운로드" onAction="#handleDownloadAction">
+                            <MenuItem text="파일 다운로드" onAction="#handleDownloadAction">
                                 <accelerator>
                                     <KeyCodeCombination alt="DOWN" code="D" control="UP"
                                                         meta="UP" shift="DOWN" shortcut="UP" />

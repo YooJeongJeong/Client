@@ -18,6 +18,7 @@ import java.net.URL;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Vector;
 
 public class RoomController implements Initializable {
     String id, pw, roomName;
@@ -42,6 +43,8 @@ public class RoomController implements Initializable {
                try {
                    Message message = Message.readMsg(socketChannel);
                    switch(message.getMsgType()) {
+                       case SUCCESS:
+                           return;
                        /* 클라이언트 입장, 퇴장 메시지일 경우 유저 목록 갱신 */
                        case JOIN:
                        case EXIT:
@@ -49,7 +52,6 @@ public class RoomController implements Initializable {
                            break;
                        default:
                    }
-
                    Platform.runLater(() -> {
                        displayText(message.getData());
                    });
@@ -64,99 +66,85 @@ public class RoomController implements Initializable {
     }
 
     public void send(String data) {
-        Thread thread = new Thread(() -> {
-           try {
-               Message message = new Message(id, pw, data, MsgType.SEND);
-               Message.writeMsg(socketChannel, message);
-           } catch (Exception e) {
-               Platform.runLater(() -> {
-                   displayText("[메시지 전송 실패]");
-                   stopClient();
-               });
-           }
-        });
-        thread.start();
+        try {
+            Message message = new Message(id, pw, data, MsgType.SEND);
+            Message.writeMsg(socketChannel, message);
+        } catch (Exception e) {
+            Platform.runLater(() -> {
+                displayText("[메시지 전송 실패]");
+                stopClient();
+            });
+        }
     }
 
     public void doUpload(String filePath) {
+        Platform.runLater(() -> {displayText("[" + filePath + " 파일 업로드 시작]");});
 
+    }
+
+    public List<String> receiveFileList() {
+        List<String> filePath = new Vector<String>();
+
+        return filePath;
+    }
+
+    public String getSelectedFileName(List<String> filePath) {
+        String selectedFileName = null;
+
+        return selectedFileName;
     }
 
     public void doDownload(String filePath) {
 
     }
 
-    public void doInvite() {
+    public void inviteUser() {
 
     }
 
-    public void doExit() {
-        Thread thread = new Thread(() -> {
-            try {
-                Message message = new Message(id, pw, roomName, MsgType.EXIT);
-                Message.writeMsg(socketChannel, message);
-                changeWindow();
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    displayText("[연결 오류 : 방 나가기 실패]");
-                    stopClient();
-                });
-            }
-        });
-        thread.start();
+    public void exitRoom() {
+        try {
+            Message message = new Message(id, pw, roomName, MsgType.EXIT);
+            Message.writeMsg(socketChannel, message);
+
+            changeWindow();
+
+        } catch (Exception e) {
+            Platform.runLater(() -> {
+                displayText("[연결 오류 : 방 나가기 실패]");
+                stopClient();
+            });
+        }
     }
+
 
     /* 서버로부터 방에 있는 유저 리스트를 받아온다 */
     public void receiveUserInfo() {
-        Thread thread = new Thread(() -> {
-            try {
-                /* 서버로 방 유저 정보 요청 */
-                Message message = new Message(id, pw, roomName, MsgType.USER_INFO);
-                Message.writeMsg(socketChannel, message);
+        try {
+            /* 서버로 방 유저 정보 요청 */
+            Message message = new Message(id, pw, roomName, MsgType.USER_INFO);
+            Message.writeMsg(socketChannel, message);
 
-                /* 서버로부터 응답 받음 */
-                message = Message.readMsg(socketChannel);
-                List<User> users = message.getUsers();
+            /* 서버로부터 응답 받음 */
+            message = Message.readMsg(socketChannel);
+            List<User> users = message.getUsers();
+            if(users != null)
                 showUserInfo(users);
-            } catch (Exception e) {
+        } catch (Exception e) {
                 e.printStackTrace();
-            }
-        });
-        thread.start();
+        }
     }
 
     /* 서버로부터 받은 방 정보를 테이블 뷰에 출력 */
     public void showUserInfo(List<User> users) {
         TableColumn userId = userInfo.getColumns().get(0);
         userId.setCellValueFactory(new PropertyValueFactory("id"));
-
         ObservableList<User> data = FXCollections.observableArrayList(users);
         userInfo.setItems(data);
     }
 
-    /* 퇴장하고 로비로 이동 */
-    public void changeWindow() {
-        Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("lobby.fxml"));
-                Parent lobby = loader.load();
-                LobbyController controller = loader.getController();
-                controller.setPrimaryStage(primaryStage);
-                controller.setInformation(socketChannel, id, pw);
-
-                Scene scene = new Scene(lobby);
-                primaryStage.setTitle(Room.LOBBY);
-                primaryStage.setResizable(false);
-                primaryStage.setScene(scene);
-                primaryStage.show();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
+    /************************************************ JavaFx UI ************************************************/
     Stage primaryStage;
-
     @FXML TextArea txtDisplay;
     @FXML TextField txtInput;
     @FXML Button btnSend;
@@ -191,7 +179,7 @@ public class RoomController implements Initializable {
         }
     }
 
-    public void handleUploadAction(ActionEvent event){
+    public void handleUploadAction (ActionEvent event) {
         try {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().addAll(
@@ -209,14 +197,37 @@ public class RoomController implements Initializable {
     }
 
     public void handleDownloadAction(ActionEvent event) {
-
+        List<String> fileList = receiveFileList();
+        String selectedFileName = getSelectedFileName(fileList);
+        doDownload(selectedFileName);
     }
 
     public void handleInviteAction(ActionEvent event) {
-
+        inviteUser();
     }
 
     public void handleExitAction(ActionEvent event) {
-        doExit();
+        exitRoom();
+    }
+
+    /* 퇴장하고 로비로 이동 */
+    public void changeWindow() {
+        Platform.runLater(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("lobby.fxml"));
+                Parent lobby = loader.load();
+                LobbyController controller = loader.getController();
+                controller.setPrimaryStage(primaryStage);
+                controller.setInformation(socketChannel, id, pw);
+
+                Scene scene = new Scene(lobby);
+                primaryStage.setTitle(Room.LOBBY + " (" + id + ")");
+                primaryStage.setResizable(false);
+                primaryStage.setScene(scene);
+                primaryStage.show();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

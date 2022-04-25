@@ -12,9 +12,8 @@
     <center>
         <TableView fx:id="roomInfo" prefHeight="200" prefWidth="400">
             <columns>
-                <TableColumn prefWidth="250" text="Room name" style="-fx-alignment: CENTER" />
-                <TableColumn prefWidth="90" text="Owner" style="-fx-alignment: CENTER"/>
-                <TableColumn prefWidth="60" text="Num" style="-fx-alignment: CENTER" />
+                <TableColumn prefWidth="300" text="Room name" style="-fx-alignment: CENTER" />
+                <TableColumn prefWidth="100" text="Owner" style="-fx-alignment: CENTER"/>
             </columns>
         </TableView>
     </center>

@@ -41,7 +41,7 @@
                         </font>
                     </Label>
 
-                    <Label text="Do you want to log in? Click here!" textFill="#6abf69" layoutX="57" layoutY="237">
+                    <Label text="Click this to log in... " textFill="#6abf69" layoutX="160" layoutY="237">
                         <font>
                             <Font name="Arial" size="20" />
                         </font>
@@ -81,7 +81,7 @@
                             </font>
                         </Label>
 
-                        <Label text="Do you want to sign up? Click here!" textFill="#6abf69" layoutX="45" layoutY="237">
+                        <Label text="Don't you have an account? → " textFill="#6abf69" layoutX="50" layoutY="237">
                             <font>
                                 <Font name="Arial" size="20" />
                             </font>
