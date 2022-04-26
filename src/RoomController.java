@@ -15,14 +15,23 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Vector;
 
 public class RoomController implements Initializable {
-    String id, pw, roomName;
     SocketChannel socketChannel;
+    FileChannel fileChannel;
+    Message message;
+    String id, pw, roomName, fileName;
+
 
     public void stopClient() {
         try {
@@ -32,29 +41,43 @@ public class RoomController implements Initializable {
             });
             if(socketChannel != null && socketChannel.isOpen())
                 socketChannel.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
     }
 
     public void receive() {
         Thread thread = new Thread(() -> {
            while(true) {
                try {
-                   Message message = Message.readMsg(socketChannel);
+                   message = Message.readMsg(socketChannel);
                    switch(message.getMsgType()) {
-                       case SUCCESS:
-                           return;
-                       /* 클라이언트 입장, 퇴장 메시지일 경우 유저 목록 갱신 */
+                       case INFO:
+                           showInfo();
+                           break;
                        case JOIN:
                        case EXIT:
-                           receiveUserInfo();
+                           Platform.runLater(() -> {displayText(message.getData());});
+                           receiveInfo();
                            break;
+                       case EXIT_SUCCESS:
+                           changeWindow();
+                           return;
+                       /* 클라이언트의 업로드 요청에 대한 서버의 응답 */
+                       case DOWNLOAD_READY:
+                       case DOWNLOAD_DOING:
+                           sendFile();
+                           break;
+                       case DOWNLOAD_END:
+                           closeFileChannel();
+                           break;
+                       /* 클라이언트의 다운로드 요청에 대한 서버의 응답*/
+                       case FILE_LIST:
+                       /* 서버가 클라이언트로 파일을 보낼 때 */
+                       case UPLOAD_START:
+                       case UPLOAD_DOING:
+                       case UPLOAD_END:
                        default:
+                           Platform.runLater(() -> {displayText(message.getData());});
                    }
-                   Platform.runLater(() -> {
-                       displayText(message.getData());
-                   });
                } catch (Exception e) {
                    Platform.runLater(() -> displayText("[서버 통신 안됨]"));
                    stopClient();
@@ -77,9 +100,52 @@ public class RoomController implements Initializable {
         }
     }
 
-    public void doUpload(String filePath) {
-        Platform.runLater(() -> {displayText("[" + filePath + " 파일 업로드 시작]");});
+    public void openFileChannel(String filePath) {
+        try {
+            String[] pathArray = filePath.split(File.separator);
+            int pathLength = pathArray.length;
+            fileName = pathArray[pathLength - 1];
 
+            Path path = Paths.get(filePath);
+            fileChannel = FileChannel.open(path, StandardOpenOption.READ);
+
+            Message message = new Message(id, pw, fileName, MsgType.UPLOAD_START);
+            Message.writeMsg(socketChannel, message);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Platform.runLater(() -> {
+                displayText("[채널 여는 중 오류 발생]");
+                stopClient();
+            });
+        }
+    }
+
+    public void sendFile() {
+        try {
+            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+            if (fileChannel.read(byteBuffer) == -1) {
+                Message message = new Message(id, pw, fileName , MsgType.UPLOAD_END);
+                Message.writeMsg(socketChannel, message);
+            } else {
+                Charset charset = Charset.defaultCharset();
+                byteBuffer.flip();
+                String data = charset.decode(byteBuffer).toString();
+                Message message = new Message(id, pw, data, MsgType.UPLOAD_DOING);
+                Message.writeMsg(socketChannel, message);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Platform.runLater(() -> displayText("[파일 전송 중 오류 발생]"));
+        }
+    }
+
+    public void closeFileChannel() {
+        try {
+            fileChannel.close();
+            Platform.runLater(() -> displayText("[" + fileName + " 업로드 완료]"));
+        } catch (Exception e) {
+            Platform.runLater(() -> displayText("[채널 닫는 중 오류 발생]"));
+        }
     }
 
     public List<String> receiveFileList() {
@@ -106,9 +172,6 @@ public class RoomController implements Initializable {
         try {
             Message message = new Message(id, pw, roomName, MsgType.EXIT);
             Message.writeMsg(socketChannel, message);
-
-            changeWindow();
-
         } catch (Exception e) {
             Platform.runLater(() -> {
                 displayText("[연결 오류 : 방 나가기 실패]");
@@ -118,29 +181,26 @@ public class RoomController implements Initializable {
     }
 
 
-    /* 서버로부터 방에 있는 유저 리스트를 받아온다 */
-    public void receiveUserInfo() {
+    /* 서버로 현재 방의 유저 리스트를 달라고 요청한다 */
+    public void receiveInfo() {
         try {
-            /* 서버로 방 유저 정보 요청 */
-            Message message = new Message(id, pw, roomName, MsgType.USER_INFO);
+            Message message = new Message(id, pw, roomName, MsgType.INFO);
             Message.writeMsg(socketChannel, message);
-
-            /* 서버로부터 응답 받음 */
-            message = Message.readMsg(socketChannel);
-            List<User> users = message.getUsers();
-            if(users != null)
-                showUserInfo(users);
-        } catch (Exception e) {
-                e.printStackTrace();
-        }
+        } catch (Exception e) {}
     }
 
     /* 서버로부터 받은 방 정보를 테이블 뷰에 출력 */
-    public void showUserInfo(List<User> users) {
-        TableColumn userId = userInfo.getColumns().get(0);
-        userId.setCellValueFactory(new PropertyValueFactory("id"));
-        ObservableList<User> data = FXCollections.observableArrayList(users);
-        userInfo.setItems(data);
+    public void showInfo() {
+        if(message == null)
+            return;
+        List<User> users = message.getUsers();
+        if(users != null) {
+            TableColumn userId = userInfo.getColumns().get(0);
+            userId.setCellValueFactory(new PropertyValueFactory("id"));
+
+            ObservableList<User> data = FXCollections.observableArrayList(users);
+            userInfo.setItems(data);
+        }
     }
 
     /************************************************ JavaFx UI ************************************************/
@@ -165,7 +225,7 @@ public class RoomController implements Initializable {
         this.pw = pw;
         this.roomName = roomName;
 
-        receiveUserInfo();
+        receiveInfo();
         receive();
     }
 
@@ -183,14 +243,13 @@ public class RoomController implements Initializable {
         try {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("All Files", "*.*"),
                     new FileChooser.ExtensionFilter("Text Files", "*.txt"),
                     new FileChooser.ExtensionFilter("Image Files", "*.jpg", "*.gif"),
-                    new FileChooser.ExtensionFilter("Audio Files", "*.wav", ".mp3", "*.aac"),
-                    new FileChooser.ExtensionFilter("All Files", "*.*"));
+                    new FileChooser.ExtensionFilter("Audio Files", "*.wav", ".mp3", "*.aac"));
             File selectedFile = fileChooser.showOpenDialog(primaryStage);
             String selectedFilePath = selectedFile.getPath();
-            Platform.runLater(() -> {displayText("[" + selectedFilePath + " 파일 업로드 시작]");});
-            doUpload(selectedFilePath);
+            openFileChannel(selectedFilePath);
         } catch (Exception e) {
             Platform.runLater(() -> {displayText("[파일 업로드 취소]");});
         }

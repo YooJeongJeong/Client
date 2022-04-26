@@ -20,90 +20,68 @@ import java.nio.channels.SocketChannel;
 import java.util.ResourceBundle;
 
 public class LoginController implements Initializable {
-    String id, pw;
     SocketChannel socketChannel;
+    String id, pw;
 
     public void doLogin() {
-        Thread thread = new Thread(() -> {
-            try {
-                socketChannel = SocketChannel.open();
-                socketChannel.configureBlocking(true);
-                socketChannel.connect(new InetSocketAddress("localhost", 5001));
+        try {
+            socketChannel = SocketChannel.open();
+            socketChannel.configureBlocking(true);
+            socketChannel.connect(new InetSocketAddress("localhost", 5001));
 
-                /* 로그인 정보를 Message 객체에 담아 직렬화하여 서버로 전송 */
-                Message message = new Message(userId.getText(), userPw.getText(), MsgType.LOG_IN);
-                Message.writeMsg(socketChannel, message);
+            Message message = new Message(userId.getText(), userPw.getText(), MsgType.LOGIN);
+            Message.writeMsg(socketChannel, message);
 
-                /* 서버로부터 응답을 받고 Message 객체로 복원 */
-                message = Message.readMsg(socketChannel);
-
-                /* 로그인 성공하면 화면 전환, 실패하면 메시지를 화면에 출력하고 소켓을 닫는다 */
-                if(message.getMsgType() == MsgType.SUCCESS) {
-                    id = message.getId();
-                    pw = message.getPw();
-                    changeWindow();
-                } else {
-                    Message finalMessage = message;
-                    Platform.runLater(() -> {
-                        alertLogin.setText(finalMessage.getData());
-                        alertLogin.setOpacity(1);
-                    });
-                    clear();
-                    if(socketChannel.isOpen())
-                        socketChannel.close();
-                }
-
-            } catch (Exception e) {
+            message = Message.readMsg(socketChannel);
+            if(message.getMsgType() == MsgType.LOGIN_SUCCESS) {
+                id = message.getId();
+                pw = message.getPw();
+                changeWindow();
+            } else if(message.getMsgType() == MsgType.LOGIN_FAILED) {
+                Message finalMessage = message;
                 Platform.runLater(() -> {
-                    alertLogin.setText("[서버와 연결이 되지 않습니다]");
+                    alertLogin.setText(finalMessage.getData());
                     alertLogin.setOpacity(1);
                 });
-                try {
-                    if(socketChannel.isOpen())
-                        socketChannel.close();
-                } catch (Exception e2) {
-                    e2.printStackTrace();
-                }
+                clear();
+                if (socketChannel.isOpen())
+                    socketChannel.close();
             }
-        });
-        thread.start();
+        } catch (Exception e) {
+            try {
+                alertLogin.setText("[서버와 연결이 되지 않습니다]");
+                alertLogin.setOpacity(1);
+                if(socketChannel != null && socketChannel.isOpen())
+                    socketChannel.close();
+            } catch (Exception e2) {e2.printStackTrace();}
+        }
     }
 
     public void doRegister() {
-        Thread thread = new Thread(() -> {
+        try {
+            socketChannel = SocketChannel.open();
+            socketChannel.configureBlocking(true);
+            socketChannel.connect(new InetSocketAddress("localhost", 5001));
+
+            Message message = new Message(newId.getText(), newPw.getText(), MsgType.SIGNUP);
+            Message.writeMsg(socketChannel, message);
+
+            message = Message.readMsg(socketChannel);
+            Message finalMessage = message;
+            Platform.runLater(() -> {
+                alertSignup.setText(finalMessage.getData());
+                alertSignup.setOpacity(1);
+            });
+            if (socketChannel.isOpen())
+                socketChannel.close();
+        } catch (Exception e) {
             try {
-                socketChannel = SocketChannel.open();
-                socketChannel.configureBlocking(true);
-                socketChannel.connect(new InetSocketAddress("localhost", 5001));
-
-                /* 회원가입 정보를 Message 객체로 담은 뒤 직렬화하여 서버로 전송 */
-                Message message = new Message(newId.getText(), newPw.getText(), MsgType.SIGN_UP);
-                Message.writeMsg(socketChannel, message);
-
-                /* 서버로부터 응답을 받고 Message 객체로 복원 */
-                message = Message.readMsg(socketChannel);
-
-                /* 회원가입 결과에 상관없이 메시지를 화면에 출력하고 소켓을 닫는다 */
-                Message finalMessage = message;
-                Platform.runLater(() -> {
-                    alertSignup.setText(finalMessage.getData());
-                    alertSignup.setOpacity(1);
-                });
-                if(socketChannel.isOpen())
+                alertSignup.setText("[서버와 연결이 되지 않습니다]");
+                alertSignup.setOpacity(1);
+                if(socketChannel != null && socketChannel.isOpen())
                     socketChannel.close();
-
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    alertSignup.setText("[서버와의 연결이 끊어졌습니다]");
-                    alertSignup.setOpacity(1);
-                });
-                try {
-                    if(socketChannel.isOpen())
-                        socketChannel.close();
-                } catch (Exception e2) {}
-            }
-        });
-        thread.start();
+            } catch (Exception e2) {e2.printStackTrace();}
+        }
     }
     /************************************************ JavaFx UI ************************************************/
     Stage primaryStage;
