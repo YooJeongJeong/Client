@@ -61,20 +61,6 @@ public class RoomController implements Initializable {
                        case EXIT_SUCCESS:
                            changeWindow();
                            return;
-                       /* 클라이언트의 업로드 요청에 대한 서버의 응답 */
-                       case DOWNLOAD_READY:
-                       case DOWNLOAD_DOING:
-                           sendFile();
-                           break;
-                       case DOWNLOAD_END:
-                           closeFileChannel();
-                           break;
-                       /* 클라이언트의 다운로드 요청에 대한 서버의 응답*/
-                       case FILE_LIST:
-                       /* 서버가 클라이언트로 파일을 보낼 때 */
-                       case UPLOAD_START:
-                       case UPLOAD_DOING:
-                       case UPLOAD_END:
                        default:
                            Platform.runLater(() -> {displayText(message.getData());});
                    }
@@ -100,53 +86,51 @@ public class RoomController implements Initializable {
         }
     }
 
-    public void openFileChannel(String filePath) {
+    public void doUpload(String filePath) {
         try {
             String[] pathArray = filePath.split(File.separator);
             int pathLength = pathArray.length;
-            fileName = pathArray[pathLength - 1];
+            String fileName = pathArray[pathLength - 1];
+            Platform.runLater(() -> displayText("[업로드 시작: " + fileName + "]"));
+
+            message = new Message(id, pw, fileName, MsgType.UPLOAD);
+            Message.writeMsg(socketChannel, message);
 
             Path path = Paths.get(filePath);
-            fileChannel = FileChannel.open(path, StandardOpenOption.READ);
+            FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
 
-            Message message = new Message(id, pw, fileName, MsgType.UPLOAD_START);
-            Message.writeMsg(socketChannel, message);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+
+            Charset charset = Charset.defaultCharset();
+            String data = "";
+            int byteCount;
+
+            while(true) {
+                byteCount = fileChannel.read(byteBuffer);
+                if(byteCount == -1) {
+                    message = new Message(id, pw, null, MsgType.UPLOAD);
+                    break;
+                }
+                byteBuffer.flip();
+                data = charset.decode(byteBuffer).toString();
+                message = new Message(id, pw, data, MsgType.UPLOAD);
+                Message.writeMsg(socketChannel, message);
+                byteBuffer.clear();
+                Thread.sleep(1000);
+            }
+
+            Platform.runLater(() -> displayText("[업로드 완료: " + fileName + "]"));
+            fileChannel.close();
+
         } catch (Exception e) {
-            e.printStackTrace();
             Platform.runLater(() -> {
-                displayText("[채널 여는 중 오류 발생]");
+                e.printStackTrace();
+                displayText("[업로드 중 오류 발생]");
                 stopClient();
             });
         }
     }
 
-    public void sendFile() {
-        try {
-            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
-            if (fileChannel.read(byteBuffer) == -1) {
-                Message message = new Message(id, pw, fileName , MsgType.UPLOAD_END);
-                Message.writeMsg(socketChannel, message);
-            } else {
-                Charset charset = Charset.defaultCharset();
-                byteBuffer.flip();
-                String data = charset.decode(byteBuffer).toString();
-                Message message = new Message(id, pw, data, MsgType.UPLOAD_DOING);
-                Message.writeMsg(socketChannel, message);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Platform.runLater(() -> displayText("[파일 전송 중 오류 발생]"));
-        }
-    }
-
-    public void closeFileChannel() {
-        try {
-            fileChannel.close();
-            Platform.runLater(() -> displayText("[" + fileName + " 업로드 완료]"));
-        } catch (Exception e) {
-            Platform.runLater(() -> displayText("[채널 닫는 중 오류 발생]"));
-        }
-    }
 
     public List<String> receiveFileList() {
         List<String> filePath = new Vector<String>();
@@ -249,7 +233,7 @@ public class RoomController implements Initializable {
                     new FileChooser.ExtensionFilter("Audio Files", "*.wav", ".mp3", "*.aac"));
             File selectedFile = fileChooser.showOpenDialog(primaryStage);
             String selectedFilePath = selectedFile.getPath();
-            openFileChannel(selectedFilePath);
+            doUpload(selectedFilePath);
         } catch (Exception e) {
             Platform.runLater(() -> {displayText("[파일 업로드 취소]");});
         }
