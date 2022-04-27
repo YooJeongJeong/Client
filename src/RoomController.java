@@ -116,7 +116,7 @@ public class RoomController implements Initializable {
                 message = new Message(id, pw, data, MsgType.UPLOAD);
                 Message.writeMsg(socketChannel, message);
                 byteBuffer.clear();
-                Thread.sleep(1000);
+                //Thread.sleep(1000);
             }
 
             Platform.runLater(() -> displayText("[업로드 완료: " + fileName + "]"));

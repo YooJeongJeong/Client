@@ -35,6 +35,7 @@ public class Message implements Serializable {
         if(byteCount == -1) {
             throw new IOException();
         }
+
         /* 바이트 버퍼에 담긴 데이터를 바이트 배열에 저장 */
         byteBuffer.flip();
         byte[] serializedMsg = new byte[byteBuffer.remaining()];
