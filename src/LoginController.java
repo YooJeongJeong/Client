@@ -32,6 +32,7 @@ public class LoginController implements Initializable {
             Message message = new Message(userId.getText(), userPw.getText(), MsgType.LOGIN);
             Message.writeMsg(socketChannel, message);
 
+
             message = Message.readMsg(socketChannel);
             if(message.getMsgType() == MsgType.LOGIN_SUCCESS) {
                 id = message.getId();

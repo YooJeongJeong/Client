@@ -12,7 +12,10 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+
 import java.net.URL;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -163,6 +166,34 @@ public class LobbyController implements Initializable {
             makeRoom();
         } else if(event.getSource().equals(btnRefresh)) {
             receiveInfo();
+        }
+    }
+
+    /* 초대된 경우, 초대 팝업창 띄움 */
+    public void showInvitedPopup() {
+        try {
+            Stage dialog = new Stage(StageStyle.UTILITY);
+            dialog.setOnCloseRequest(e -> {
+
+            });
+            dialog.initModality(Modality.WINDOW_MODAL);
+            dialog.initOwner(primaryStage);
+            dialog.setTitle("download popup");
+
+            Parent parent = FXMLLoader.load(getClass().getResource("downloadPopUp.fxml"));
+
+            Button btnOk = (Button) parent.lookup("#btnOk");
+            btnOk.setText("다운로드");
+            Button btnCancel = (Button) parent.lookup("#btnCancle");
+            btnCancel.setText("취소");
+            btnCancel.setOnAction(e -> dialog.close());
+
+            Scene scene = new Scene(parent);
+            dialog.setResizable(false);
+            dialog.setScene(scene);
+            dialog.show();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

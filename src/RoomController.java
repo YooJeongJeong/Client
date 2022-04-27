@@ -11,7 +11,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.File;
 import java.net.URL;
@@ -32,6 +34,7 @@ public class RoomController implements Initializable {
     Message message;
     String id, pw, roomName, fileName;
 
+    long startTime, endTime;
 
     public void stopClient() {
         try {
@@ -61,6 +64,14 @@ public class RoomController implements Initializable {
                        case EXIT_SUCCESS:
                            changeWindow();
                            return;
+                       /* 클라이언트의 업로드 요청에 대한 서버의 대답 */
+                       case UPLOAD_START:
+                       case UPLOAD_DO:
+                           sendFile();
+                           break;
+                       case UPLOAD_END:
+                           closeFileChannelForUpload();
+                           break;
                        default:
                            Platform.runLater(() -> {displayText(message.getData());});
                    }
@@ -86,51 +97,56 @@ public class RoomController implements Initializable {
         }
     }
 
-    public void doUpload(String filePath) {
+    public void openFileChannelForUpload(String filePath) {
         try {
+            startTime = System.nanoTime();
             String[] pathArray = filePath.split(File.separator);
             int pathLength = pathArray.length;
-            String fileName = pathArray[pathLength - 1];
-            Platform.runLater(() -> displayText("[업로드 시작: " + fileName + "]"));
-
-            message = new Message(id, pw, fileName, MsgType.UPLOAD);
-            Message.writeMsg(socketChannel, message);
+            fileName = pathArray[pathLength - 1];
 
             Path path = Paths.get(filePath);
-            FileChannel fileChannel = FileChannel.open(path, StandardOpenOption.READ);
+            fileChannel = FileChannel.open(path, StandardOpenOption.READ);
 
-            ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+            message = new Message(id, pw, fileName, MsgType.UPLOAD_START);
+            Message.writeMsg(socketChannel, message);
+
+            Platform.runLater(() -> displayText("[업로드 시작: " + fileName + "]"));
+        } catch (Exception e) {}
+    }
+
+    public void closeFileChannelForUpload() {
+        try {
+            fileChannel.close();
+            endTime = System.nanoTime();
+            Platform.runLater(() -> {displayText("[업로드 완료 : " + fileName + " + , 수행시간 : " + (endTime - startTime) / 1000000000 + "초]");});
+        } catch (Exception e) {}
+    }
+
+    public void sendFile() {
+        try {
+            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
 
             Charset charset = Charset.defaultCharset();
             String data = "";
             int byteCount;
 
-            while(true) {
-                byteCount = fileChannel.read(byteBuffer);
-                if(byteCount == -1) {
-                    message = new Message(id, pw, null, MsgType.UPLOAD);
-                    break;
-                }
-                byteBuffer.flip();
-                data = charset.decode(byteBuffer).toString();
-                message = new Message(id, pw, data, MsgType.UPLOAD);
+            byteCount = fileChannel.read(byteBuffer);
+            if(byteCount == -1) {
+                message = new Message(id, pw, fileName, MsgType.UPLOAD_END);
                 Message.writeMsg(socketChannel, message);
-                byteBuffer.clear();
-                //Thread.sleep(1000);
+                return;
             }
+            byteBuffer.flip();
+            byte[] fileData = new byte[byteBuffer.remaining()];
+            byteBuffer.get(fileData);
 
-            Platform.runLater(() -> displayText("[업로드 완료: " + fileName + "]"));
-            fileChannel.close();
-
+            message = new Message(fileData, MsgType.UPLOAD_DO);
+            Message.writeMsg(socketChannel, message);
+            byteBuffer.clear();
         } catch (Exception e) {
-            Platform.runLater(() -> {
-                e.printStackTrace();
-                displayText("[업로드 중 오류 발생]");
-                stopClient();
-            });
+            Platform.runLater(() -> {displayText("[업로드 중 오류 발생]");});
         }
     }
-
 
     public List<String> receiveFileList() {
         List<String> filePath = new Vector<String>();
@@ -233,7 +249,7 @@ public class RoomController implements Initializable {
                     new FileChooser.ExtensionFilter("Audio Files", "*.wav", ".mp3", "*.aac"));
             File selectedFile = fileChooser.showOpenDialog(primaryStage);
             String selectedFilePath = selectedFile.getPath();
-            doUpload(selectedFilePath);
+            openFileChannelForUpload(selectedFilePath);
         } catch (Exception e) {
             Platform.runLater(() -> {displayText("[파일 업로드 취소]");});
         }
@@ -241,17 +257,48 @@ public class RoomController implements Initializable {
 
     public void handleDownloadAction(ActionEvent event) {
         List<String> fileList = receiveFileList();
-        String selectedFileName = getSelectedFileName(fileList);
-        doDownload(selectedFileName);
     }
 
     public void handleInviteAction(ActionEvent event) {
         inviteUser();
+
     }
 
     public void handleExitAction(ActionEvent event) {
         exitRoom();
     }
+
+    public void showDownloadPopup() {
+        try {
+            Stage dialog = new Stage(StageStyle.UTILITY);
+            dialog.setOnCloseRequest(e -> {
+
+            });
+            dialog.initModality(Modality.WINDOW_MODAL);
+            dialog.initOwner(primaryStage);
+            dialog.setTitle("download popup");
+
+            Parent parent = FXMLLoader.load(getClass().getResource("downloadPopUp.fxml"));
+
+            Button btnOk = (Button) parent.lookup("#btnOk");
+            btnOk.setText("다운로드");
+            Button btnCancel = (Button) parent.lookup("#btnCancle");
+            btnCancel.setText("취소");
+            btnCancel.setOnAction(e -> dialog.close());
+
+            Scene scene = new Scene(parent);
+            dialog.setResizable(false);
+            dialog.setScene(scene);
+            dialog.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void showInviteRequestPopup() {
+
+    }
+
 
     /* 퇴장하고 로비로 이동 */
     public void changeWindow() {

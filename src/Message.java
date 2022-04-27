@@ -9,12 +9,18 @@ public class Message implements Serializable {
     private String id, pw;
     private String data;
     private MsgType msgType;
+    private byte[] fileData;
 
     private List<User> users;
     private List<Room> rooms;
 
     Message (String id, String pw, MsgType msgType) {
         this(id, pw, null, msgType);
+    }
+
+    Message(byte[] fileData, MsgType msgType) {
+        this.fileData = fileData;
+        this.msgType = msgType;
     }
 
     Message(String id, String pw, String data, MsgType msgType) {
@@ -28,7 +34,7 @@ public class Message implements Serializable {
     public static Message readMsg (SocketChannel socketChannel) throws Exception {
         Message message = null;
         /* 소켓 채널을 통해 바이트화된 Message 객체 정보를 읽어들임 */
-        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(1024 * 4);
         int byteCount = socketChannel.read(byteBuffer);
 
         /* 상대방이 SocketChannel의 close() 메소드를 호출한 경우 */

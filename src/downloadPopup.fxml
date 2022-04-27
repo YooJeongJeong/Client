@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.text.Font?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            prefHeight="300.0" prefWidth="240.0">
+    <center>
+        <TableView fx:id="userInfo">
+            <columns>
+                <TableColumn text="File" prefWidth="240" style="-fx-alignment: CENTER"/>
+            </columns>
+        </TableView>
+    </center>
+
+    <bottom>
+        <HBox>
+            <Button fx:id="btnOk" prefHeight="30" prefWidth="120"/>
+            <Button fx:id="btnCancle" prefHeight="30" prefWidth="120" />
+        </HBox>
+    </bottom>
+</BorderPane>

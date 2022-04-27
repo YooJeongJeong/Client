@@ -63,7 +63,6 @@
 
                     <Menu text="끝내기">
                         <MenuItem text="끝내기" onAction="#handleExitAction">
-
                             <accelerator>
                                 <KeyCodeCombination alt="DOWN" code="X" control="UP"
                                                     meta="UP" shift="DOWN" shortcut="UP" />
