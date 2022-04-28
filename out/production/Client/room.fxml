@@ -45,7 +45,7 @@
                         </items>
                     </Menu>
 
-                    <Menu text="초대">
+                    <Menu text="기타">
                         <MenuItem text="id로 초대" onAction="#handleInviteAction">
                             <accelerator>
                                 <KeyCodeCombination alt="DOWN" code="Z" control="UP"
@@ -59,11 +59,8 @@
                                 </ImageView>
                             </graphic>
                         </MenuItem>
-                    </Menu>
 
-                    <Menu text="끝내기">
-                        <MenuItem text="끝내기" onAction="#handleExitAction">
-
+                        <MenuItem text="나가기" onAction="#handleExitAction">
                             <accelerator>
                                 <KeyCodeCombination alt="DOWN" code="X" control="UP"
                                                     meta="UP" shift="DOWN" shortcut="UP" />
@@ -75,6 +72,13 @@
                                     </image>
                                 </ImageView>
                             </graphic>
+                        </MenuItem>
+
+                        <MenuItem text="새로고침" onAction="#receiveInfo">
+                            <accelerator>
+                                <KeyCodeCombination alt="UP" code="F5" control="UP"
+                                                    meta="UP" shift="UP" shortcut="UP" />
+                            </accelerator>
                         </MenuItem>
                     </Menu>
                 </menus>

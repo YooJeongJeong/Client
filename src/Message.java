@@ -10,17 +10,27 @@ public class Message implements Serializable {
     private String data;
     private MsgType msgType;
     private byte[] fileData;
+    private List<FileInfo> fileList;
 
     private List<User> users;
     private List<Room> rooms;
 
-    Message (String id, String pw, MsgType msgType) {
-        this(id, pw, null, msgType);
+    Message(MsgType msgType) {
+        this.msgType = msgType;
+    }
+
+    Message (String data, MsgType msgType) {
+        this.data = data;
+        this.msgType = msgType;
     }
 
     Message(byte[] fileData, MsgType msgType) {
         this.fileData = fileData;
         this.msgType = msgType;
+    }
+
+    Message (String id, String pw, MsgType msgType) {
+        this(id, pw, null, msgType);
     }
 
     Message(String id, String pw, String data, MsgType msgType) {
@@ -86,6 +96,14 @@ public class Message implements Serializable {
         return msgType;
     }
 
+    public byte[] getFileData() {
+        return fileData;
+    }
+
+    public List<FileInfo> getFileInfo() {
+        return fileList;
+    }
+
     public List<Room> getRooms() {
         return rooms;
     }
@@ -93,6 +111,8 @@ public class Message implements Serializable {
     public List<User> getUsers() {
         return users;
     }
+
+    public void setId(String id) {this.id = id;}
 
     public void setData(String data) {
         this.data = data;

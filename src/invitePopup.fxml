@@ -12,6 +12,7 @@
             prefWidth="240.0" prefHeight="150.0">
     <children>
         <Label id="txtTitle" prefWidth="240" layoutY="30" alignment="CENTER"/>
+        <TextField id="userId" layoutX="5" layoutY="60" prefWidth="230" alignment="CENTER"/>
 
         <Button fx:id="btnOk" layoutX="10" layoutY="100" prefWidth="100"/>
         <Button fx:id="btnNo" layoutX="130" layoutY="100" prefWidth="100"/>

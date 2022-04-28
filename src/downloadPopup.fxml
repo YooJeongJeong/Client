@@ -9,19 +9,20 @@
 <?import javafx.scene.text.Font?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            prefHeight="300.0" prefWidth="240.0">
+            prefHeight="300.0" prefWidth="300.0">
     <center>
-        <TableView fx:id="userInfo">
+        <TableView fx:id="fileInfo">
             <columns>
-                <TableColumn text="File" prefWidth="240" style="-fx-alignment: CENTER"/>
+                <TableColumn text="file" prefWidth="200" style="-fx-alignment: CENTER"/>
+                <TableColumn text="size" prefWidth="100" style="-fx-alignment: CENTER"/>
             </columns>
         </TableView>
     </center>
 
     <bottom>
         <HBox>
-            <Button fx:id="btnOk" prefHeight="30" prefWidth="120"/>
-            <Button fx:id="btnCancle" prefHeight="30" prefWidth="120" />
+            <Button fx:id="btnOk" prefHeight="30" prefWidth="150"/>
+            <Button fx:id="btnCancle" prefHeight="30" prefWidth="150" />
         </HBox>
     </bottom>
 </BorderPane>

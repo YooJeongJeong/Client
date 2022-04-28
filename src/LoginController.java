@@ -58,7 +58,7 @@ public class LoginController implements Initializable {
         }
     }
 
-    public void doRegister() {
+    public void doSignup() {
         try {
             socketChannel = SocketChannel.open();
             socketChannel.configureBlocking(true);
@@ -111,7 +111,7 @@ public class LoginController implements Initializable {
         } else if(event.getSource().equals(btnLogin)) {
             doLogin();
         } else if(event.getSource().equals(btnSignup)) {
-            doRegister();
+            doSignup();
             clear();
         } else if(event.getSource().equals(btnGoToLogin)) {
             clear();

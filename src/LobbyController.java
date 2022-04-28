@@ -7,15 +7,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
@@ -36,6 +34,9 @@ public class LobbyController implements Initializable {
                     switch(message.getMsgType()) {
                         case INFO:
                             showInfo();     break;
+                        case INVITE:
+                            invited();      break;
+                        case INVITE_SUCCESS:
                         case MAKE_SUCCESS:
                         case JOIN_SUCCESS:
                             changeWindow(message.getData());    return;
@@ -49,6 +50,7 @@ public class LobbyController implements Initializable {
                     try {
                         if(socketChannel != null && socketChannel.isOpen())
                             socketChannel.close();
+                        break;
                     } catch (Exception e2) {}
                 }
             }
@@ -90,8 +92,8 @@ public class LobbyController implements Initializable {
         TableColumn roomName = roomInfo.getColumns().get(0);
         TableColumn roomOwner = roomInfo.getColumns().get(1);
 
-        roomName.setCellValueFactory(new PropertyValueFactory("name"));
-        roomOwner.setCellValueFactory(new PropertyValueFactory("owner"));
+        roomName.setCellValueFactory(new PropertyValueFactory<Room, String>("name"));
+        roomOwner.setCellValueFactory(new PropertyValueFactory<Room, String>("owner"));
 
         ObservableList<Room> data = FXCollections.observableArrayList(rooms);
         roomInfo.setItems(data);
@@ -101,7 +103,7 @@ public class LobbyController implements Initializable {
     /* 서버로부터 받은 대기실 유저 정보를 테이블 뷰에 출력*/
     public void showUserInfo(List<User> users) {
         TableColumn userId = userInfo.getColumns().get(0);
-        userId.setCellValueFactory(new PropertyValueFactory("id"));
+        userId.setCellValueFactory(new PropertyValueFactory<User, String>("id"));
 
         ObservableList<User> data = FXCollections.observableArrayList(users);
         userInfo.setItems(data);
@@ -137,6 +139,54 @@ public class LobbyController implements Initializable {
         }
     }
 
+    /* 채팅방에 있는 유저가 대기실 유저를 초대했을 때 초대받는 사람에게 수락/거부 팝업창이 뜬다 */
+    public void invited() {
+        Platform.runLater(() -> {
+            Stage dialog = new Stage(StageStyle.UTILITY);
+            dialog.initModality(Modality.WINDOW_MODAL);
+            dialog.initOwner(primaryStage);
+            dialog.setTitle("invite");
+
+            Parent parent = null;
+            try {
+                parent = FXMLLoader.load(getClass().getResource("alertPopup.fxml"));
+            } catch (IOException e) {e.printStackTrace();}
+
+            /* 초대한 사람의 id와 방 이름 */
+            String id = message.getId();
+            String roomName = message.getData();
+
+            Label txtTitle = (Label) parent.lookup("#txtTitle");
+            txtTitle.setText("[채팅방 초대]" +
+                            "\n초대자: " + id +
+                            "\n방 이름: " + roomName);
+            Button btnOk = (Button) parent.lookup("#btnOk");
+            btnOk.setText("수락");
+            btnOk.setOnAction(event -> {
+                try {
+                    Message message = new Message(id, "", roomName, MsgType.INVITE_SUCCESS);
+                    Message.writeMsg(socketChannel, message);
+                    dialog.close();
+                } catch (Exception e) {}
+            });
+
+            Button btnNo = (Button) parent.lookup("#btnNo");
+            btnNo.setText("거부");
+            btnNo.setOnAction(event -> {
+                try {
+                    Message message = new Message(id, "", roomName, MsgType.INVITE_FAILED);
+                    Message.writeMsg(socketChannel, message);
+                } catch (Exception e) {}
+                dialog.close();
+            });
+
+            Scene scene = new Scene(parent);
+            dialog.setResizable(false);
+            dialog.setScene(scene);
+            dialog.show();
+        });
+    }
+
     /************************************************ JavaFx UI ************************************************/
     Stage primaryStage;
     @FXML TableView<Room> roomInfo;
@@ -149,6 +199,7 @@ public class LobbyController implements Initializable {
 
     public void setPrimaryStage(Stage primaryStage) {
         this.primaryStage = primaryStage;
+        primaryStage.setOnCloseRequest(event -> {System.exit(0);});
     }
 
     public void setInformation(SocketChannel socketChannel, String id, String pw) {
@@ -166,34 +217,6 @@ public class LobbyController implements Initializable {
             makeRoom();
         } else if(event.getSource().equals(btnRefresh)) {
             receiveInfo();
-        }
-    }
-
-    /* 초대된 경우, 초대 팝업창 띄움 */
-    public void showInvitedPopup() {
-        try {
-            Stage dialog = new Stage(StageStyle.UTILITY);
-            dialog.setOnCloseRequest(e -> {
-
-            });
-            dialog.initModality(Modality.WINDOW_MODAL);
-            dialog.initOwner(primaryStage);
-            dialog.setTitle("download popup");
-
-            Parent parent = FXMLLoader.load(getClass().getResource("downloadPopUp.fxml"));
-
-            Button btnOk = (Button) parent.lookup("#btnOk");
-            btnOk.setText("다운로드");
-            Button btnCancel = (Button) parent.lookup("#btnCancle");
-            btnCancel.setText("취소");
-            btnCancel.setOnAction(e -> dialog.close());
-
-            Scene scene = new Scene(parent);
-            dialog.setResizable(false);
-            dialog.setScene(scene);
-            dialog.show();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
