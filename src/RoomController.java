@@ -55,7 +55,7 @@ public class RoomController implements Initializable {
                try {
                    message = Message.readMsg(socketChannel);
                    switch(message.getMsgType()) {
-                       case INFO:   // 방에 있는 유저 리스트나 방 전체 목록을 클라이언트에게 전달
+                       case ROOM_INFO:   // 방에 있는 유저 리스트나 방 전체 목록을 클라이언트에게 전달
                            showInfo();
                            break;
                        /* 누군가 채팅방에 들어오거나 나갔을때 이를 전체 유저들에게 알린 뒤 유저 리스트 새로고침 */
@@ -279,7 +279,7 @@ public class RoomController implements Initializable {
     /* 서버로 방에 있는 유저 리스트를 달라고 요청 */
     public void receiveInfo() {
         try {
-            Message message = new Message(id, pw, roomName, MsgType.INFO);
+            Message message = new Message(id, pw, roomName, MsgType.ROOM_INFO);
             Message.writeMsg(socketChannel, message);
         } catch (Exception e) {}
     }

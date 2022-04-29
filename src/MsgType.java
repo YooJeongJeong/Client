@@ -6,11 +6,11 @@ public enum MsgType {
     JOIN_SUCCESS, JOIN_FAILED,
     EXIT_SUCCESS, EXIT_FAILED,
     INVITE_SUCCESS, INVITE_FAILED,
-    DISCONNECT,
+    DISCONNECT, REFRESH,
 
     /* 클라이언트가 서버로 보내는 메시지 */
     LOGIN, SIGNUP,
-    INFO, MAKE,
+    ROOM_INFO, MAKE_ROOM,
     INVITE,
 
     /* 공통 메시지 */

@@ -9,6 +9,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -32,7 +33,7 @@ public class LobbyController implements Initializable {
                 try {
                     message = Message.readMsg(socketChannel);
                     switch(message.getMsgType()) {
-                        case INFO:
+                        case ROOM_INFO:
                             showInfo();     break;
                         case INVITE:
                             invited();      break;
@@ -41,9 +42,11 @@ public class LobbyController implements Initializable {
                         case JOIN_SUCCESS:
                             changeWindow(message.getData());    return;
                         case MAKE_FAILED:
-                            System.out.println(message.getData());  break;
+                            showPopupMsg(message.getData());    break;
                         case JOIN_FAILED:
                             throw new Exception();
+                        case REFRESH:
+                            receiveInfo();  break;
                         default:
                     }
                 } catch (Exception e) {
@@ -61,7 +64,7 @@ public class LobbyController implements Initializable {
     /* 서버로 유저와 방 정보 리스트를 보내달라고 요청하는 메소드 */
     public void receiveInfo() {
         try {
-            Message message = new Message(id, pw, Room.LOBBY, MsgType.INFO);
+            Message message = new Message(id, pw, Room.LOBBY, MsgType.ROOM_INFO);
             Message.writeMsg(socketChannel, message);
         } catch (Exception e) {}
     }
@@ -121,7 +124,7 @@ public class LobbyController implements Initializable {
             Message message = new Message(id, pw, name, MsgType.JOIN);
             Message.writeMsg(socketChannel, message);
         } catch (Exception e) {
-            System.out.println("방 이름을 확인해주세요");
+            showPopupMsg("방 이름을 확인해주세요");
         }
     }
 
@@ -132,10 +135,10 @@ public class LobbyController implements Initializable {
             String name = roomName.getText();
             if(name == null || name.trim().isEmpty())
                 throw new Exception();
-            Message message = new Message(id, pw, name, MsgType.MAKE);
+            Message message = new Message(id, pw, name, MsgType.MAKE_ROOM);
             Message.writeMsg(socketChannel, message);
         } catch (Exception e) {
-            System.out.println("방 이름을 확인해주세요");
+            showPopupMsg("방 이름을 확인해주세요");
         }
     }
 
@@ -218,6 +221,41 @@ public class LobbyController implements Initializable {
         } else if(event.getSource().equals(btnRefresh)) {
             receiveInfo();
         }
+    }
+
+    public void showPopupMsg(String msg) {
+        Platform.runLater(() -> {
+            Stage dialog = new Stage(StageStyle.UTILITY);
+            dialog.initModality(Modality.WINDOW_MODAL);
+            dialog.initOwner(primaryStage);
+            dialog.setTitle("알림");
+
+            dialog.setHeight(100);
+
+            Parent parent = null;
+            try {
+                parent = FXMLLoader.load(getClass().getResource("alertPopup.fxml"));
+            } catch (IOException e) {e.printStackTrace();}
+
+            Label txtTitle = (Label) parent.lookup("#txtTitle");
+            txtTitle.setText(msg);
+            txtTitle.setFont(Font.font(15));
+            txtTitle.setLayoutY(25);
+
+            Button btnOk = (Button) parent.lookup("#btnOk");
+            btnOk.setText("확인");
+            btnOk.setLayoutX(70);
+            btnOk.setLayoutY(60);
+            btnOk.setOnAction(event -> {dialog.close();});
+
+            Button btnNo = (Button) parent.lookup("#btnNo");
+            btnNo.setVisible(false);
+
+            Scene scene = new Scene(parent);
+            dialog.setResizable(false);
+            dialog.setScene(scene);
+            dialog.show();
+        });
     }
 
     public void changeWindow(String roomName) {
