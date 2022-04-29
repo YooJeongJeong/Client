@@ -158,13 +158,9 @@ public class RoomController implements Initializable {
         }
     }
 
+    /* 서버로부터 다운로드 가능한 파일 리스트를 받고 팝업창에 띄움 */
     public void receiveFileList() {
         List<FileInfo> fileList = message.getFileInfo();
-        showDownloadList(fileList);
-    }
-
-    /* 서버로부터 다운로드 가능한 파일 리스트를 받고 팝업창에 띄움 */
-    public void showDownloadList(List<FileInfo> fileList) {
         Platform.runLater(() -> {
             Stage dialog = new Stage(StageStyle.UTILITY);
             dialog.setOnCloseRequest(e -> displayText("[다운로드 취소]"));
