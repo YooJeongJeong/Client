@@ -159,7 +159,7 @@ public class RoomController implements Initializable {
         try {
             fileChannel.close();
             endTime_upload = System.nanoTime();
-            Platform.runLater(() -> {displayText("[업로드 완료 : " + fileName + " + , " +
+            Platform.runLater(() -> {displayText("[업로드 완료 : " + fileName + ", " +
                     "수행시간 : " + (endTime_upload - startTime_upload) / 1000000000 + "초]");});
         } catch (Exception e) {}
     }
