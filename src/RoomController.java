@@ -79,9 +79,6 @@ public class RoomController implements Initializable {
                        case UPLOAD_DO:
                            sendFile();
                            break;
-                       case UPLOAD_END:
-                           endUpload();
-                           break;
                        /* 클라이언트의 다운로드 요청에 대한 서버의 응답 */
                        case DOWNLOAD_LIST:
                            receiveFileList();
@@ -143,26 +140,22 @@ public class RoomController implements Initializable {
             if(byteCount == -1) {
                 message = new Message(id, pw, fileName, MsgType.UPLOAD_END);
                 Message.writeMsg(socketChannel, message);
-                return;
-            }
-            byteBuffer.flip();
-            byte[] fileData = new byte[byteBuffer.remaining()];
-            byteBuffer.get(fileData);
 
-            message = new Message(fileData, MsgType.UPLOAD_DO);
-            Message.writeMsg(socketChannel, message);
+                fileChannel.close();
+                endTime_upload = System.nanoTime();
+                Platform.runLater(() -> {displayText("[업로드 완료 : " + fileName + ", " +
+                        "수행시간 : " + (endTime_upload - startTime_upload) / 1000000000 + "초]");});
+            } else {
+                byteBuffer.flip();
+                byte[] fileData = new byte[byteBuffer.remaining()];
+                byteBuffer.get(fileData);
+
+                message = new Message(fileData, MsgType.UPLOAD_DO);
+                Message.writeMsg(socketChannel, message);
+            }
         } catch (Exception e) {
             Platform.runLater(() -> {displayText("[업로드 중 오류 발생]");});
         }
-    }
-
-    public void endUpload() {
-        try {
-            fileChannel.close();
-            endTime_upload = System.nanoTime();
-            Platform.runLater(() -> {displayText("[업로드 완료 : " + fileName + ", " +
-                    "수행시간 : " + (endTime_upload - startTime_upload) / 1000000000 + "초]");});
-        } catch (Exception e) {}
     }
 
     public void receiveFileList() {
@@ -218,7 +211,7 @@ public class RoomController implements Initializable {
             Button btnCancel = (Button) parent.lookup("#btnCancle");
             btnCancel.setText("취소");
             btnCancel.setOnAction(e -> {
-                displayText("다운로드 취소");
+                displayText("[다운로드 취소]");
                 dialog.close();
             });
 
@@ -269,8 +262,6 @@ public class RoomController implements Initializable {
                 displayText("[다운로드 완료 : " + fileName + ", " +
                         "수행시간 : " + (endTime_download - startTime_download) / 1000000000 + "초]");
                 });
-            message = new Message(fileName, MsgType.DOWNLOAD_END);
-            Message.writeMsg(socketChannel, message);
         } catch (Exception e) {}
     }
 
