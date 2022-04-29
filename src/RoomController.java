@@ -70,7 +70,7 @@ public class RoomController implements Initializable {
                            changeWindow();
                            return;
                        case INVITE_FAILED:
-                           Platform.runLater(() -> displayText("[상대방이 초대를 거부했습니다]"));
+                           Platform.runLater(() -> displayText(message.getData()));
                            break;
                        /* 클라이언트의 업로드 요청에 대한 서버의 대답 */
                        case UPLOAD_START:

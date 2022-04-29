@@ -45,10 +45,10 @@
                         </items>
                     </Menu>
 
-                    <Menu text="기타">
+                    <Menu text="초대">
                         <MenuItem text="id로 초대" onAction="#handleInviteAction">
                             <accelerator>
-                                <KeyCodeCombination alt="DOWN" code="Z" control="UP"
+                                <KeyCodeCombination alt="DOWN" code="Q" control="UP"
                                                     meta="UP" shift="DOWN" shortcut="UP" />
                             </accelerator>
                             <graphic>
@@ -59,10 +59,12 @@
                                 </ImageView>
                             </graphic>
                         </MenuItem>
+                    </Menu>
 
-                        <MenuItem text="나가기" onAction="#handleExitAction">
+                    <Menu text="나가기">
+                        <MenuItem text="방에서 퇴장" onAction="#handleExitAction">
                             <accelerator>
-                                <KeyCodeCombination alt="DOWN" code="X" control="UP"
+                                <KeyCodeCombination alt="DOWN" code="E" control="UP"
                                                     meta="UP" shift="DOWN" shortcut="UP" />
                             </accelerator>
                             <graphic>
@@ -73,12 +75,21 @@
                                 </ImageView>
                             </graphic>
                         </MenuItem>
+                    </Menu>
 
+                    <Menu text="새로고침">
                         <MenuItem text="새로고침" onAction="#receiveInfo">
                             <accelerator>
-                                <KeyCodeCombination alt="UP" code="F5" control="UP"
+                                <KeyCodeCombination alt="UP" code="T" control="DOWN"
                                                     meta="UP" shift="UP" shortcut="UP" />
                             </accelerator>
+                            <graphic>
+                                <ImageView>
+                                    <image>
+                                        <Image url="@icons/refresh.png" requestedHeight="15" requestedWidth="15" />
+                                    </image>
+                                </ImageView>
+                            </graphic>
                         </MenuItem>
                     </Menu>
                 </menus>
