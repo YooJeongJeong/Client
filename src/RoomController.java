@@ -58,12 +58,14 @@ public class RoomController implements Initializable {
                        case ROOM_INFO:   // 방에 있는 유저 리스트나 방 전체 목록을 클라이언트에게 전달
                            showInfo();
                            break;
+                       case SEND:
+                           Platform.runLater(() -> displayText(message.getData()));
                        /* 누군가 채팅방에 들어오거나 나갔을때 이를 전체 유저들에게 알린 뒤 유저 리스트 새로고침 */
                        case JOIN:
                        case EXIT:
                        case INVITE:
                        case DISCONNECT:
-                           Platform.runLater(() -> {displayText(message.getData());});
+                           Platform.runLater(() -> displayText(message.getData()));
                            receiveInfo();
                            break;
                        case EXIT_SUCCESS:
@@ -94,7 +96,6 @@ public class RoomController implements Initializable {
                            endDownload();
                            break;
                        default:
-                           Platform.runLater(() -> {displayText(message.getData());});
                    }
                } catch (Exception e) {
                    Platform.runLater(() -> displayText("[서버 통신 안됨]"));
@@ -197,8 +198,17 @@ public class RoomController implements Initializable {
             btnOk.setText("다운로드");
             btnOk.setOnAction(event->{
                 FileInfo selectedFile = (FileInfo) fileInfo.getSelectionModel().getSelectedItem();
+                if(selectedFile == null) {
+                    dialog.close();
+                    return;
+                }
+                String file = selectedFile.getName();
+                if(file == null || file.trim().isEmpty()) {
+                    dialog.close();
+                    return;
+                }
                 /* 다운로드할 파일 이름을 메시지에 담아 서버에 요청 */
-                Message message = new Message(selectedFile.getName(), MsgType.DOWNLOAD_START);
+                Message message = new Message(file, MsgType.DOWNLOAD_START);
                 try {
                     Message.writeMsg(socketChannel, message);
                 } catch (Exception e) {}

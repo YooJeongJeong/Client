@@ -80,7 +80,7 @@
                     <Menu text="새로고침">
                         <MenuItem text="새로고침" onAction="#receiveInfo">
                             <accelerator>
-                                <KeyCodeCombination alt="UP" code="T" control="DOWN"
+                                <KeyCodeCombination alt="UP" code="F5" control="DOWN"
                                                     meta="UP" shift="UP" shortcut="UP" />
                             </accelerator>
                             <graphic>
