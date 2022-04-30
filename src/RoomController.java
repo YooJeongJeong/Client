@@ -1,6 +1,4 @@
-import com.sun.glass.ui.CommonDialogs;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -76,7 +74,7 @@ public class RoomController implements Initializable {
                            sendFile();
                            break;
                        case DOWNLOAD_LIST:
-                           receiveFileList();
+                           showDownloadPopup(message.getFileInfo());
                            break;
                        case DOWNLOAD_START:
                            openFileChannel(dirPath + message.getData(), MsgType.DOWNLOAD_START);
@@ -170,66 +168,6 @@ public class RoomController implements Initializable {
         }
     }
 
-    /* 서버로부터 다운로드 가능한 파일 리스트를 받고 팝업창에 띄움 */
-    public void receiveFileList() {
-        List<FileInfo> fileList = message.getFileInfo();
-        Platform.runLater(() -> {
-            Stage dialog = new Stage(StageStyle.UTILITY);
-            dialog.setOnCloseRequest(e -> displayText("[다운로드 취소]"));
-            dialog.initModality(Modality.WINDOW_MODAL);
-            dialog.initOwner(primaryStage);
-            dialog.setTitle("download");
-
-            Parent parent = null;
-            try {
-                parent = FXMLLoader.load(getClass().getResource("downloadPopup.fxml"));
-            } catch (IOException e) {e.printStackTrace();}
-
-            TableView fileInfo = (TableView) parent.lookup("#fileInfo");
-            TableColumn fileName = (TableColumn) fileInfo.getColumns().get(0);
-            TableColumn fileSize = (TableColumn) fileInfo.getColumns().get(1);
-
-            fileName.setCellValueFactory(new PropertyValueFactory<FileInfo, String>("name"));
-            fileSize.setCellValueFactory(new PropertyValueFactory<FileInfo, String>("size"));
-
-            ObservableList<FileInfo> data = FXCollections.observableArrayList(fileList);
-            fileInfo.setItems(data);
-
-            Button btnOk = (Button) parent.lookup("#btnOk");
-            btnOk.setText("다운로드");
-            btnOk.setOnAction(event->{
-                FileInfo selectedFile = (FileInfo) fileInfo.getSelectionModel().getSelectedItem();
-                if(selectedFile == null) {
-                    dialog.close();
-                    return;
-                }
-                String file = selectedFile.getName();
-                if(file == null || file.trim().isEmpty()) {
-                    dialog.close();
-                    return;
-                }
-                /* 다운로드할 파일 이름을 메시지에 담아 서버에 요청 */
-                Message message = new Message(file, MsgType.DOWNLOAD_START);
-                try {
-                    Message.writeMsg(socketChannel, message);
-                } catch (Exception e) {}
-                dialog.close();
-            });
-
-            Button btnCancel = (Button) parent.lookup("#btnCancle");
-            btnCancel.setText("취소");
-            btnCancel.setOnAction(e -> {
-                displayText("[다운로드 취소]");
-                dialog.close();
-            });
-
-            Scene scene = new Scene(parent);
-            dialog.setResizable(false);
-            dialog.setScene(scene);
-            dialog.show();
-        });
-    }
-
     public void receiveFile() {
         try {
             String fileName = message.getData();
@@ -297,7 +235,6 @@ public class RoomController implements Initializable {
     @FXML Button btnSend;
     @FXML TableView<User> userInfo;
 
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         separator = File.separator;
@@ -357,7 +294,7 @@ public class RoomController implements Initializable {
 
     public void handleInviteAction(ActionEvent event) {
         Platform.runLater(() -> {
-            Stage dialog = new Stage(StageStyle.UTILITY);
+            Stage dialog = new Stage(StageStyle.DECORATED);
             dialog.setOnCloseRequest(e -> displayText("[초대 취소]"));
             dialog.initModality(Modality.WINDOW_MODAL);
             dialog.initOwner(primaryStage);
@@ -399,6 +336,65 @@ public class RoomController implements Initializable {
 
     public void handleExitAction(ActionEvent event) {
         exitRoom();
+    }
+
+    /* 서버로부터 받은 다운로드 가능한 파일 리스트를 팝업창에 띄움 */
+    public void showDownloadPopup(List<FileInfo> fileList) {
+        Platform.runLater(() -> {
+            Stage dialog = new Stage(StageStyle.DECORATED);
+            dialog.setOnCloseRequest(e -> displayText("[다운로드 취소]"));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(primaryStage);
+            dialog.setTitle("download");
+
+            Parent parent = null;
+            try {
+                parent = FXMLLoader.load(getClass().getResource("downloadPopup.fxml"));
+            } catch (IOException e) {e.printStackTrace();}
+
+            TableView fileInfo = (TableView) parent.lookup("#fileInfo");
+            TableColumn fileName = (TableColumn) fileInfo.getColumns().get(0);
+            TableColumn fileSize = (TableColumn) fileInfo.getColumns().get(1);
+
+            fileName.setCellValueFactory(new PropertyValueFactory<FileInfo, String>("name"));
+            fileSize.setCellValueFactory(new PropertyValueFactory<FileInfo, String>("size"));
+
+            ObservableList<FileInfo> data = FXCollections.observableArrayList(fileList);
+            fileInfo.setItems(data);
+
+            Button btnOk = (Button) parent.lookup("#btnOk");
+            btnOk.setText("다운로드");
+            btnOk.setOnAction(event->{
+                FileInfo selectedFile = (FileInfo) fileInfo.getSelectionModel().getSelectedItem();
+                if(selectedFile == null) {
+                    dialog.close();
+                    return;
+                }
+                String file = selectedFile.getName();
+                if(file == null || file.trim().isEmpty()) {
+                    dialog.close();
+                    return;
+                }
+                /* 서버에 파일 다운로드 요청 */
+                Message message = new Message(file, MsgType.DOWNLOAD_START);
+                try {
+                    Message.writeMsg(socketChannel, message);
+                } catch (Exception e) {}
+                dialog.close();
+            });
+
+            Button btnCancel = (Button) parent.lookup("#btnCancle");
+            btnCancel.setText("취소");
+            btnCancel.setOnAction(e -> {
+                displayText("[다운로드 취소]");
+                dialog.close();
+            });
+
+            Scene scene = new Scene(parent);
+            dialog.setResizable(false);
+            dialog.setScene(scene);
+            dialog.show();
+        });
     }
 
     /* 퇴장하고 로비로 이동 */

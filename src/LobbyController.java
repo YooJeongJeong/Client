@@ -225,12 +225,12 @@ public class LobbyController implements Initializable {
 
     public void showPopupMsg(String msg) {
         Platform.runLater(() -> {
-            Stage dialog = new Stage(StageStyle.UTILITY);
-            dialog.initModality(Modality.WINDOW_MODAL);
+            Stage dialog = new Stage(StageStyle.DECORATED);
+            dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.initOwner(primaryStage);
             dialog.setTitle("알림");
 
-            dialog.setHeight(100);
+            dialog.setHeight(150);
 
             Parent parent = null;
             try {

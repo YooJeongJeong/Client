@@ -114,20 +114,4 @@ public class Message implements Serializable {
     }
 
     public void setId(String id) {this.id = id;}
-
-    public void setData(String data) {
-        this.data = data;
-    }
-
-    public void setMsgType(MsgType msgType) {
-        this.msgType = msgType;
-    }
-
-    public void setUsers(List<User> users) {
-        this.users = users;
-    }
-
-    public void setRooms(List<Room> rooms) {
-        this.rooms = rooms;
-    }
 }
