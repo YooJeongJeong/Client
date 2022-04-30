@@ -119,7 +119,12 @@ public class RoomController implements Initializable {
     public void startUpload(String filePath) {
         try {
             startTime_upload = System.nanoTime();
-            String[] pathArray = filePath.split(File.separator);
+            String separator = File.separator;
+            if(separator.equals("\\")) {
+               separator += separator;
+            }
+
+            String[] pathArray = filePath.split(separator);
             int pathLength = pathArray.length;
             fileName = pathArray[pathLength - 1];
 
@@ -130,7 +135,9 @@ public class RoomController implements Initializable {
             Message.writeMsg(socketChannel, message);
 
             Platform.runLater(() -> displayText("[업로드 시작: " + fileName + "]"));
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void sendFile() {
@@ -222,8 +229,13 @@ public class RoomController implements Initializable {
         try {
             startTime_download = System.nanoTime();
             /* 서버가 파일 보낼 준비가 되면 클라이언트도 채널 열고 기다림 */
+            String separator = File.separator;
+            if(separator.equals("\\")) {
+                System.out.println("true");
+                separator += separator;
+            }
             String fileName = message.getData();
-            String filePath = "file" + File.separator + fileName;
+            String filePath = "file" +separator + fileName;
             Path path = Paths.get(filePath);
             Files.createDirectories(path.getParent());
 
