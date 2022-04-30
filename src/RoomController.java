@@ -33,7 +33,8 @@ public class RoomController implements Initializable {
     SocketChannel socketChannel;
     FileChannel fileChannel;
     Message message;
-    String id, pw, roomName, fileName;
+    String id, pw, roomName;
+    String separator, dirPath;
 
     long startTime_upload, endTime_upload;
     long startTime_download, endTime_download;
@@ -55,42 +56,36 @@ public class RoomController implements Initializable {
                try {
                    message = Message.readMsg(socketChannel);
                    switch(message.getMsgType()) {
-                       case ROOM_INFO:   // 방에 있는 유저 리스트나 방 전체 목록을 클라이언트에게 전달
+                       case ROOM_INFO:
                            showInfo();
                            break;
-                       case SEND:
-                           Platform.runLater(() -> displayText(message.getData()));
-                       /* 누군가 채팅방에 들어오거나 나갔을때 이를 전체 유저들에게 알린 뒤 유저 리스트 새로고침 */
                        case JOIN:
                        case EXIT:
                        case INVITE:
                        case DISCONNECT:
+                           receiveInfo();       // 유저가 들어오거나 나가면 유저 목록 새로고침 요청 후 메시지 출력
+                       case SEND:
+                       case INVITE_FAILED:
                            Platform.runLater(() -> displayText(message.getData()));
-                           receiveInfo();
                            break;
                        case EXIT_SUCCESS:
                            changeWindow();
                            return;
-                       case INVITE_FAILED:
-                           Platform.runLater(() -> displayText(message.getData()));
-                           break;
-                       /* 클라이언트의 업로드 요청에 대한 서버의 대답 */
                        case UPLOAD_START:
                        case UPLOAD_DO:
                            sendFile();
                            break;
-                       /* 클라이언트의 다운로드 요청에 대한 서버의 응답 */
                        case DOWNLOAD_LIST:
                            receiveFileList();
                            break;
                        case DOWNLOAD_START:
-                           startDownload();
+                           openFileChannel(dirPath + message.getData(), MsgType.DOWNLOAD_START);
                            break;
                        case DOWNLOAD_DO:
                            receiveFile();
                            break;
                        case DOWNLOAD_END:
-                           endDownload();
+                           closeFileChannel();
                            break;
                        default:
                    }
@@ -116,25 +111,34 @@ public class RoomController implements Initializable {
         }
     }
 
-    public void startUpload(String filePath) {
+    public void openFileChannel(String filePath, MsgType msgType) {
         try {
-            startTime_upload = System.nanoTime();
-            String separator = File.separator;
-            if(separator.equals("\\")) {
-               separator += separator;
+            if (msgType == MsgType.UPLOAD_START) {
+                startTime_upload = System.nanoTime();
+                String[] pathArray = filePath.split(separator);
+                int pathLength = pathArray.length;
+                String fileName = pathArray[pathLength - 1];
+
+                Path path = Paths.get(filePath);
+                fileChannel = FileChannel.open(path, StandardOpenOption.READ);
+
+                message = new Message(fileName, MsgType.UPLOAD_START);
+                Message.writeMsg(socketChannel, message);
+
+                Platform.runLater(() -> displayText("[업로드 시작: " + fileName + "]"));
+            } else if (msgType == MsgType.DOWNLOAD_START) {
+                startTime_download = System.nanoTime();
+                String fileName = message.getData();
+
+                Path path = Paths.get(filePath);
+                Files.createDirectories(path.getParent());
+                fileChannel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+
+                message = new Message(fileName, MsgType.DOWNLOAD_DO);
+                Message.writeMsg(socketChannel, message);
+
+                Platform.runLater(() -> {displayText("[다운로드 시작 : " + fileName + "]");});
             }
-
-            String[] pathArray = filePath.split(separator);
-            int pathLength = pathArray.length;
-            fileName = pathArray[pathLength - 1];
-
-            Path path = Paths.get(filePath);
-            fileChannel = FileChannel.open(path, StandardOpenOption.READ);
-
-            message = new Message(id, pw, fileName, MsgType.UPLOAD_START);
-            Message.writeMsg(socketChannel, message);
-
-            Platform.runLater(() -> displayText("[업로드 시작: " + fileName + "]"));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -142,10 +146,11 @@ public class RoomController implements Initializable {
 
     public void sendFile() {
         try {
+            String fileName = message.getData();
             ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
             int byteCount = fileChannel.read(byteBuffer);
             if(byteCount == -1) {
-                message = new Message(id, pw, fileName, MsgType.UPLOAD_END);
+                message = new Message(fileName, MsgType.UPLOAD_END);
                 Message.writeMsg(socketChannel, message);
 
                 fileChannel.close();
@@ -157,7 +162,7 @@ public class RoomController implements Initializable {
                 byte[] fileData = new byte[byteBuffer.remaining()];
                 byteBuffer.get(fileData);
 
-                message = new Message(fileData, MsgType.UPLOAD_DO);
+                message = new Message(fileName, fileData, MsgType.UPLOAD_DO);
                 Message.writeMsg(socketChannel, message);
             }
         } catch (Exception e) {
@@ -225,28 +230,6 @@ public class RoomController implements Initializable {
         });
     }
 
-    public void startDownload(){
-        try {
-            startTime_download = System.nanoTime();
-            /* 서버가 파일 보낼 준비가 되면 클라이언트도 채널 열고 기다림 */
-            String separator = File.separator;
-            if(separator.equals("\\")) {
-                System.out.println("true");
-                separator += separator;
-            }
-            String fileName = message.getData();
-            String filePath = "file" +separator + fileName;
-            Path path = Paths.get(filePath);
-            Files.createDirectories(path.getParent());
-
-            fileChannel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            Platform.runLater(() -> {displayText("[다운로드 시작 : " + fileName + "]");});
-
-            message = new Message(fileName, MsgType.DOWNLOAD_DO);
-            Message.writeMsg(socketChannel, message);
-        } catch (Exception e) {}
-    }
-
     public void receiveFile() {
         try {
             String fileName = message.getData();
@@ -261,7 +244,7 @@ public class RoomController implements Initializable {
         }
     }
 
-    public void endDownload() {
+    public void closeFileChannel() {
         try {
             endTime_download = System.nanoTime();
             fileChannel.close();
@@ -316,7 +299,12 @@ public class RoomController implements Initializable {
 
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {}
+    public void initialize(URL location, ResourceBundle resources) {
+        separator = File.separator;
+        if(separator.equals("\\"))
+            separator += separator;
+        dirPath = "file" + separator;
+    }
 
     public void setPrimaryStage(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -354,7 +342,7 @@ public class RoomController implements Initializable {
                     new FileChooser.ExtensionFilter("Audio Files", "*.wav", ".mp3", "*.aac"));
             File selectedFile = fileChooser.showOpenDialog(primaryStage);
             String selectedFilePath = selectedFile.getPath();
-            startUpload(selectedFilePath);
+            openFileChannel(selectedFilePath, MsgType.UPLOAD_START);
         } catch (Exception e) {
             Platform.runLater(() -> {displayText("[파일 업로드 취소]");});
         }

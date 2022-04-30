@@ -24,7 +24,8 @@ public class Message implements Serializable {
         this.msgType = msgType;
     }
 
-    Message(byte[] fileData, MsgType msgType) {
+    Message(String fileName, byte[] fileData, MsgType msgType) {
+        this.data = fileName;
         this.fileData = fileData;
         this.msgType = msgType;
     }
