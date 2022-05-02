@@ -13,4 +13,5 @@ public class FileInfo implements Serializable{
     }
 
     public String  getName() {return name;}
+    public String getSize() {return size;}
 }
