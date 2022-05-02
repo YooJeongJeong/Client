@@ -59,11 +59,11 @@ public class RoomController implements Initializable {
                            break;
                        case JOIN:
                        case EXIT:
-                       case INVITE:
                        case DISCONNECT:
+                       case INVITE_SUCCESS:
                            receiveInfo();       // 유저가 들어오거나 나가면 유저 목록 새로고침 요청 후 메시지 출력
-                       case SEND:
                        case INVITE_FAILED:
+                       case SEND:
                            Platform.runLater(() -> displayText(message.getData()));
                            break;
                        case EXIT_SUCCESS:
