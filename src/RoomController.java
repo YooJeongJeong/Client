@@ -145,7 +145,7 @@ public class RoomController implements Initializable {
     public void sendFile() {
         try {
             String fileName = message.getData();
-            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(500);
             int byteCount = fileChannel.read(byteBuffer);
             if(byteCount == -1) {
                 message = new Message(fileName, MsgType.UPLOAD_END);
