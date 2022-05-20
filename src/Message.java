@@ -10,8 +10,8 @@ public class Message implements Serializable {
     private String data;
     private MsgType msgType;
     private byte[] fileData;
+    
     private List<FileInfo> fileList;
-
     private List<User> users;
     private List<Room> rooms;
 
